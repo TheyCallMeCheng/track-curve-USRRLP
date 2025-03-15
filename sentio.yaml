@@ -1,1 +1,5 @@
 project: track-curve-USRRLP
+contracts:
+  - chain: "1"
+    address: "0xC907ba505C2E1cbc4658c395d4a2c7E6d2c32656"
+    name: CurveTwocryptoOptimized

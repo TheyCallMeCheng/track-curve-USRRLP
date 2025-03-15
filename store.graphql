@@ -1,0 +1,7 @@
+type holder @entity {
+    id: String!
+    balance: BigDecimal!
+    stakedaoGaugeBalance: BigDecimal
+    convexGaugeBalance: BigDecimal
+    curveGaugeBalance: BigDecimal
+}
