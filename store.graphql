@@ -3,7 +3,7 @@ type Holder @entity {
     balance: BigDecimal!
     stakedaoGaugeBalance: StakeDaoHolder
     convexGaugeBalance: ConvexHolder
-    curveGaugeBalance: BigDecimal
+    curveGaugeBalance: CurveHolder
 }
 
 type StakeDaoHolder @entity {
@@ -12,6 +12,11 @@ type StakeDaoHolder @entity {
 }
 
 type ConvexHolder @entity {
+    id: String!
+    balance: BigDecimal!
+}
+
+type CurveHolder @entity {
     id: String!
     balance: BigDecimal!
 }

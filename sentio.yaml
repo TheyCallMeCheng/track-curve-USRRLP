@@ -9,3 +9,6 @@ contracts:
   - chain: "1"
     address: "0xF403C135812408BFbE8713b5A23a04b3D48AAE31"
     name: Booster
+  - chain: "1"
+    address: "0x52ed9F154F25DD0AbC67EdB15dCE90fd92d8b22f"
+    name: LiquidityGaugeV6

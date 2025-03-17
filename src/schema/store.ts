@@ -18,7 +18,7 @@ interface HolderConstructorInput {
   balance: BigDecimal;
   stakedaoGaugeBalanceID?: ID;
   convexGaugeBalanceID?: ID;
-  curveGaugeBalance?: BigDecimal;
+  curveGaugeBalanceID?: ID;
 }
 @Entity("Holder")
 export class Holder extends AbstractEntity  {
@@ -41,8 +41,10 @@ export class Holder extends AbstractEntity  {
 
 	convexGaugeBalanceID: ID
 
-	@Column("BigDecimal")
-	curveGaugeBalance?: BigDecimal
+	@One("CurveHolder")
+	_curveGaugeBalance: Promise<CurveHolder | undefined>
+
+	curveGaugeBalanceID: ID
   constructor(data: HolderConstructorInput) {super()}
   
   stakedaoGaugeBalance(): Promise<StakeDaoHolder | undefined> {
@@ -59,6 +61,14 @@ export class Holder extends AbstractEntity  {
 
   setConvexGaugeBalance(convexGaugeBalance: ConvexHolder | undefined) {
     if (convexGaugeBalance) this.convexGaugeBalanceID = convexGaugeBalance.id
+  }
+
+  curveGaugeBalance(): Promise<CurveHolder | undefined> {
+    return this._curveGaugeBalance
+  }
+
+  setCurveGaugeBalance(curveGaugeBalance: CurveHolder | undefined) {
+    if (curveGaugeBalance) this.curveGaugeBalanceID = curveGaugeBalance.id
   }
 }
 
@@ -101,12 +111,31 @@ export class ConvexHolder extends AbstractEntity  {
 }
 
 
+interface CurveHolderConstructorInput {
+  id: String;
+  balance: BigDecimal;
+}
+@Entity("CurveHolder")
+export class CurveHolder extends AbstractEntity  {
+
+	@Required
+	@Column("String")
+	id: String
+
+	@Required
+	@Column("BigDecimal")
+	balance: BigDecimal
+  constructor(data: CurveHolderConstructorInput) {super()}
+  
+}
+
+
 const source = `type Holder @entity {
     id: String!
     balance: BigDecimal!
     stakedaoGaugeBalance: StakeDaoHolder
     convexGaugeBalance: ConvexHolder
-    curveGaugeBalance: BigDecimal
+    curveGaugeBalance: CurveHolder
 }
 
 type StakeDaoHolder @entity {
@@ -118,12 +147,18 @@ type ConvexHolder @entity {
     id: String!
     balance: BigDecimal!
 }
+
+type CurveHolder @entity {
+    id: String!
+    balance: BigDecimal!
+}
 `
 DatabaseSchema.register({
   source,
   entities: {
     "Holder": Holder,
 		"StakeDaoHolder": StakeDaoHolder,
-		"ConvexHolder": ConvexHolder
+		"ConvexHolder": ConvexHolder,
+		"CurveHolder": CurveHolder
   }
 })
