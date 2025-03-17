@@ -1,5 +1,11 @@
-project: track-curve-USRRLP
+project: track-curve
 contracts:
   - chain: "1"
     address: "0xC907ba505C2E1cbc4658c395d4a2c7E6d2c32656"
     name: CurveTwocryptoOptimized
+  - chain: "1"
+    address: "0xc1e4775b3a589784aacd15265ac39d3b3c13ca3c"
+    name: Liquidity Gauge v4
+  - chain: "1"
+    address: "0xF403C135812408BFbE8713b5A23a04b3D48AAE31"
+    name: Booster

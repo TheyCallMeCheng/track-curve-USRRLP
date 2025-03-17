@@ -13,15 +13,15 @@ import { DatabaseSchema } from '@sentio/sdk'
 
 
 
-interface holderConstructorInput {
+interface HolderConstructorInput {
   id: String;
   balance: BigDecimal;
-  stakedaoGaugeBalance?: BigDecimal;
-  convexGaugeBalance?: BigDecimal;
+  stakedaoGaugeBalanceID?: ID;
+  convexGaugeBalanceID?: ID;
   curveGaugeBalance?: BigDecimal;
 }
-@Entity("holder")
-export class holder extends AbstractEntity  {
+@Entity("Holder")
+export class Holder extends AbstractEntity  {
 
 	@Required
 	@Column("String")
@@ -31,30 +31,99 @@ export class holder extends AbstractEntity  {
 	@Column("BigDecimal")
 	balance: BigDecimal
 
-	@Column("BigDecimal")
-	stakedaoGaugeBalance?: BigDecimal
+	@One("StakeDaoHolder")
+	_stakedaoGaugeBalance: Promise<StakeDaoHolder | undefined>
 
-	@Column("BigDecimal")
-	convexGaugeBalance?: BigDecimal
+	stakedaoGaugeBalanceID: ID
+
+	@One("ConvexHolder")
+	_convexGaugeBalance: Promise<ConvexHolder | undefined>
+
+	convexGaugeBalanceID: ID
 
 	@Column("BigDecimal")
 	curveGaugeBalance?: BigDecimal
-  constructor(data: holderConstructorInput) {super()}
+  constructor(data: HolderConstructorInput) {super()}
+  
+  stakedaoGaugeBalance(): Promise<StakeDaoHolder | undefined> {
+    return this._stakedaoGaugeBalance
+  }
+
+  setStakedaoGaugeBalance(stakedaoGaugeBalance: StakeDaoHolder | undefined) {
+    if (stakedaoGaugeBalance) this.stakedaoGaugeBalanceID = stakedaoGaugeBalance.id
+  }
+
+  convexGaugeBalance(): Promise<ConvexHolder | undefined> {
+    return this._convexGaugeBalance
+  }
+
+  setConvexGaugeBalance(convexGaugeBalance: ConvexHolder | undefined) {
+    if (convexGaugeBalance) this.convexGaugeBalanceID = convexGaugeBalance.id
+  }
+}
+
+
+interface StakeDaoHolderConstructorInput {
+  id: String;
+  balance: BigDecimal;
+}
+@Entity("StakeDaoHolder")
+export class StakeDaoHolder extends AbstractEntity  {
+
+	@Required
+	@Column("String")
+	id: String
+
+	@Required
+	@Column("BigDecimal")
+	balance: BigDecimal
+  constructor(data: StakeDaoHolderConstructorInput) {super()}
   
 }
 
 
-const source = `type holder @entity {
+interface ConvexHolderConstructorInput {
+  id: String;
+  balance: BigDecimal;
+}
+@Entity("ConvexHolder")
+export class ConvexHolder extends AbstractEntity  {
+
+	@Required
+	@Column("String")
+	id: String
+
+	@Required
+	@Column("BigDecimal")
+	balance: BigDecimal
+  constructor(data: ConvexHolderConstructorInput) {super()}
+  
+}
+
+
+const source = `type Holder @entity {
     id: String!
     balance: BigDecimal!
-    stakedaoGaugeBalance: BigDecimal
-    convexGaugeBalance: BigDecimal
+    stakedaoGaugeBalance: StakeDaoHolder
+    convexGaugeBalance: ConvexHolder
     curveGaugeBalance: BigDecimal
+}
+
+type StakeDaoHolder @entity {
+    id: String!
+    balance: BigDecimal!
+}
+
+type ConvexHolder @entity {
+    id: String!
+    balance: BigDecimal!
 }
 `
 DatabaseSchema.register({
   source,
   entities: {
-    "holder": holder
+    "Holder": Holder,
+		"StakeDaoHolder": StakeDaoHolder,
+		"ConvexHolder": ConvexHolder
   }
 })
