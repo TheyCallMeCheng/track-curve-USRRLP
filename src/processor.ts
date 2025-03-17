@@ -1,5 +1,4 @@
-import { BigDecimal, Counter, Gauge, scaleDown, TokenAmount } from "@sentio/sdk"
-import { ERC20Processor } from "@sentio/sdk/eth/builtin"
+import { BigDecimal, Counter, Gauge, scaleDown } from "@sentio/sdk"
 import {
     BoosterProcessor,
     curvetwocryptooptimized,
@@ -15,21 +14,15 @@ import {
     CURVE_GAUGE_ADDRESS,
     CURVE_POOL_ADDRESS,
     STAKEDAO_GAUGE_ADDRESS_PROXY,
-    STAKEDAO_VAULT,
     START_BLOCK,
 } from "./constants.js"
-import {
-    CurveTwocryptoOptimized,
-    CurveTwocryptoOptimizedContext,
-    TransferEvent,
-} from "./types/eth/curvetwocryptooptimized.js"
+import { CurveTwocryptoOptimizedContext, TransferEvent } from "./types/eth/curvetwocryptooptimized.js"
 import { ConvexHolder, CurveHolder, Holder, StakeDaoHolder } from "./schema/store.js"
 import {
     DepositEvent as StakedaoDepositEvent,
     LiquidityGaugeV4Context as StakedaoContext,
     WithdrawEvent as StakedaoWithdrawEvent,
 } from "./types/eth/liquiditygaugev4.js"
-import { token } from "@sentio/sdk/utils"
 import { BoosterContext, DepositedEvent as ConvexDepositEvent, WithdrawnEvent } from "./types/eth/booster.js"
 import {
     DepositEvent as CurveDepositEvent,
@@ -37,6 +30,7 @@ import {
     WithdrawEvent as CurveWithdrawEvent,
 } from "./types/eth/liquiditygaugev6.js"
 
+// Curve pool holder tracker
 const TransferEventHandler = async function (event: TransferEvent, ctx: CurveTwocryptoOptimizedContext) {
     const senderBalance = await ctx.contract.balanceOf(event.args.sender)
     const receiverBalance = await ctx.contract.balanceOf(event.args.receiver)
@@ -59,6 +53,7 @@ CurveTwocryptoOptimizedProcessor.bind({ address: CURVE_POOL_ADDRESS, startBlock:
     TransferEventHandler
 )
 
+// Stakedao Holders tracker
 const StakedaoDepositEventHandler = async function (event: StakedaoDepositEvent, ctx: StakedaoContext) {
     const oldBalance = await ctx.store.get(StakeDaoHolder, event.args.provider)
     const stdHolder = new StakeDaoHolder({
@@ -95,6 +90,7 @@ LiquidityGaugeV4Processor.bind({ address: STAKEDAO_GAUGE_ADDRESS_PROXY, startBlo
     .onEventDeposit(StakedaoDepositEventHandler)
     .onEventWithdraw(StakedaoWithdrawEventHandler)
 
+// Convex holders tracker
 const ConvexDepositEventHandler = async function (event: ConvexDepositEvent, ctx: BoosterContext) {
     if (event.args.poolid != BigInt(CONVEX_PID)) {
         return
@@ -133,6 +129,7 @@ BoosterProcessor.bind({ address: CONVEX_ADDRESS, startBlock: START_BLOCK })
     .onEventDeposited(ConvexDepositEventHandler)
     .onEventWithdrawn(ConvexWithdrawEventHandler)
 
+// Cruve gauge holders tracker
 const CurveGaugeDepositHandler = async function (event: CurveDepositEvent, ctx: LiquidityGaugeV6Context) {
     const oldBalance = await ctx.store.get(CurveHolder, event.args.provider)
     // console.log("Curve deposit " + event.args.provider + " value " + event.args.value)
