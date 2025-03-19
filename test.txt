@@ -28,3 +28,7 @@ LP AMOUNT = 948.692305621103308875
 
 sender balance: 13.131270620228166174 supply: 7803079.18000621597861244 usr price: 0.997707577588355 rlp price: 1.1571737716108106 ratio sender 0.00000168283190741859 
 implicit usr holdings 19349088305463144846.47539102045433523768 usd value 29940614412856431719.177835268889845289536926501515367408
+
+
+'Error: unsupported protocol  (info={ "protocol": "" }, operation="request", code=UNSUPPORTED_OPERATION, version=6.13.1)\n    at Je (/Users/marianionutcioancaradu/track-curve-USRRLP/node_modules/@sentio/runtime/lib/chunk-VDRKULG2.js:25:11201)\n    at B (/Users/marianionutcioancaradu/track-curve-USRRLP/node_modules/@sentio/runtime/lib/chunk-VDRKULG2.js:25:11335)\n    at e.t (/Users/marianionutcioancaradu/track-curve-USRRLP/node_modules/@sentio/runtime/lib/chunk-VDRKULG2.js:25:18515)\n    at e.#m (/Us…kN._send (/Users/marianionutcioancaradu/track-curve-USRRLP/node_modules/@sentio/runtime/lib/chunk-VDRKULG2.js:25:247773)\n    at <anonymous> (/Users/marianionutcioancaradu/track-curve-USRRLP/node_modules/@sentio/runtime/lib/chunk-VDRKULG2.js:25:238951)\n    at Timeout._onTimeout (/Users/marianionutcioancaradu/track-curve-USRRLP/node_modules/@sentio/runtime/lib/chunk-VDRKULG2.js:25:239588)\n    at listOnTimeout (node:internal/timers:573:17)\n    at process.processTimers (node:internal/timers:514:7)'
+'unsupported protocol  (info={ "protocol": "" }, operation="request", code=UNSUPPORTED_OPERATION, version=6.13.1)'
