@@ -1,6 +1,0 @@
-process error 2599 {
-    "code": 13,
-    "details": "error processing log: {\"address\":\"0x52ed9f154f25dd0abc67edb15dce90fd92d8b22f\",\"topics\":[\"0x884edad9ce6fa2440d8a54cc123490eb96d2768479d49ff9c7366125a9424364\",\"0x00000000000000000000000052f541764e6e90eebc5c21ff570de0e2d63766b6\"],\"data\":\"0x000000000000000000000000000000000000000000003566508c326ab8c40fa3\",\"blockNumber\":\"0x141808b\",\"transactionHash\":\"0x0ace6a363d9931a743fa10673ce307d3a86f2d3a817b8b845e548348eef17f3e\",\"transactionIndex\":\"0x9\",\"blockHash\":\"0xc8564e72b3049be05be140ca556acbeef62e3f2b6f023256d46e7feb7c2691ca\",\"logIndex\":\"0x3c\",\"removed\":false}\nCannot read properties of undefined (reading 'balance')\nTypeError: Cannot read properties of undefined (reading 'balance')\n    at CurveGaugeWithdrawHandler (/tmp/sentio/cache/1139869757/sentio/src/processor.ts:124:42)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Proxy.handler (/tmp/sentio/cache/1139869757/sentio/xTHW6u5s/node_modules/@sentio/sdk/src/eth/base-processor.ts:495:11)\n    at async Promise.all (index 0)\n    at async pr.processLog (/tmp/sentio/cache/1139869757/sentio/xTHW6u5s/node_modules/@sentio/sdk/src/eth/eth-plugin.ts:444:32)",
-    "level": "debug",
-    "timestamp": "2025-03-17T12:33:02.959+00:00"
-}

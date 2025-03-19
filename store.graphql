@@ -1,6 +1,7 @@
 type Holder @entity {
     id: String!
     balance: BigDecimal!
+    usdValue: BigDecimal
     stakedaoGaugeBalance: StakeDaoHolder
     convexGaugeBalance: ConvexHolder
     curveGaugeBalance: CurveHolder

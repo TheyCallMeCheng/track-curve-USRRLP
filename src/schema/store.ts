@@ -16,6 +16,7 @@ import { DatabaseSchema } from '@sentio/sdk'
 interface HolderConstructorInput {
   id: String;
   balance: BigDecimal;
+  usdValue?: BigDecimal;
   stakedaoGaugeBalanceID?: ID;
   convexGaugeBalanceID?: ID;
   curveGaugeBalanceID?: ID;
@@ -30,6 +31,9 @@ export class Holder extends AbstractEntity  {
 	@Required
 	@Column("BigDecimal")
 	balance: BigDecimal
+
+	@Column("BigDecimal")
+	usdValue?: BigDecimal
 
 	@One("StakeDaoHolder")
 	_stakedaoGaugeBalance: Promise<StakeDaoHolder | undefined>
@@ -133,6 +137,7 @@ export class CurveHolder extends AbstractEntity  {
 const source = `type Holder @entity {
     id: String!
     balance: BigDecimal!
+    usdValue: BigDecimal
     stakedaoGaugeBalance: StakeDaoHolder
     convexGaugeBalance: ConvexHolder
     curveGaugeBalance: CurveHolder

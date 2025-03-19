@@ -1,9 +1,7 @@
 import { BigDecimal, Counter, Gauge, scaleDown } from "@sentio/sdk"
 import {
     BoosterProcessor,
-    curvetwocryptooptimized,
     CurveTwocryptoOptimizedProcessor,
-    liquiditygaugev4,
     LiquidityGaugeV4Processor,
     LiquidityGaugeV6Processor,
 } from "./types/eth/index.js"
@@ -13,8 +11,10 @@ import {
     CPOOL_DECIMALS,
     CURVE_GAUGE_ADDRESS,
     CURVE_POOL_ADDRESS,
+    RLP_ADDRESS,
     STAKEDAO_GAUGE_ADDRESS_PROXY,
     START_BLOCK,
+    USR_ADDRESS,
 } from "./constants.js"
 import { CurveTwocryptoOptimizedContext, TransferEvent } from "./types/eth/curvetwocryptooptimized.js"
 import { ConvexHolder, CurveHolder, Holder, StakeDaoHolder } from "./schema/store.js"
@@ -29,18 +29,60 @@ import {
     LiquidityGaugeV6Context,
     WithdrawEvent as CurveWithdrawEvent,
 } from "./types/eth/liquiditygaugev6.js"
+import { getPriceByType } from "@sentio/sdk/utils"
+import { EthChainId } from "@sentio/sdk/eth"
 
 // Curve pool holder tracker
 const TransferEventHandler = async function (event: TransferEvent, ctx: CurveTwocryptoOptimizedContext) {
-    const senderBalance = await ctx.contract.balanceOf(event.args.sender)
-    const receiverBalance = await ctx.contract.balanceOf(event.args.receiver)
-    let from = new Holder({
+    const senderBalance = scaleDown(await ctx.contract.balanceOf(event.args.sender), CPOOL_DECIMALS)
+    const receiverBalance = scaleDown(await ctx.contract.balanceOf(event.args.receiver), CPOOL_DECIMALS)
+
+    const supply = scaleDown(await ctx.contract.totalSupply(), CPOOL_DECIMALS)
+    const rlpContractBalance = scaleDown(await ctx.contract.balances(0), CPOOL_DECIMALS)
+    const usrContractBalance = scaleDown(await ctx.contract.balances(1), CPOOL_DECIMALS)
+    const usrPrice = (await getPriceByType(EthChainId.ETHEREUM, USR_ADDRESS, ctx.timestamp)) || 0
+    const rlpPrice = (await getPriceByType(EthChainId.ETHEREUM, RLP_ADDRESS, ctx.timestamp)) || 0
+    const ratioSender = senderBalance.dividedBy(supply)
+    const ratioReceiver = receiverBalance.dividedBy(supply)
+
+    const implicitUsrHoldingSender = ratioSender.multipliedBy(usrContractBalance)
+    const implicitRlpHoldingSender = ratioSender.multipliedBy(rlpContractBalance)
+    const usdValueSender = BigDecimal.sum(
+        implicitUsrHoldingSender.multipliedBy(usrPrice),
+        implicitRlpHoldingSender.multipliedBy(rlpPrice)
+    )
+
+    const implicitUsrHoldingReceiver = ratioReceiver.multipliedBy(usrContractBalance)
+    const implicitRlpHoldingReceiver = ratioReceiver.multipliedBy(rlpContractBalance)
+    const usdValueReceiver = BigDecimal.sum(
+        implicitUsrHoldingReceiver.multipliedBy(usrPrice),
+        implicitRlpHoldingReceiver.multipliedBy(rlpPrice)
+    )
+    console.log(
+        "sender balance: " +
+            senderBalance +
+            "supply: " +
+            supply +
+            "usr price: " +
+            usrPrice +
+            "rlp price: " +
+            rlpPrice +
+            " ratio sender " +
+            ratioSender +
+            " implicit usr holdings " +
+            implicitRlpHoldingSender +
+            " usd value " +
+            usdValueSender
+    )
+    const from = new Holder({
         id: event.args.sender,
-        balance: scaleDown(senderBalance, CPOOL_DECIMALS),
+        balance: senderBalance,
+        usdValue: usdValueSender,
     })
     const to = new Holder({
         id: event.args.receiver,
-        balance: scaleDown(receiverBalance, CPOOL_DECIMALS),
+        balance: receiverBalance,
+        usdValue: usdValueReceiver,
     })
 
     await ctx.store.upsert(from)
