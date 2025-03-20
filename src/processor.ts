@@ -84,31 +84,29 @@ const TransferEventHandler = async function (event: TransferEvent, ctx: CurveTwo
                     usrContractBalance
             )
         }
-        if (ctx.store.get(Holder, event.args.sender) == null) {
-            ctx.eventLogger.emit("New holder", {
+        const oldSend = await ctx.store.get(Holder, event.args.receiver)
+        const oldReci = await ctx.store.get(Holder, event.args.receiver)
+        if (oldSend == undefined) {
+            ctx.eventLogger.emit("New holder curve LP holder", {
                 sender: event.args.sender,
-                receiver: event.args.receiver,
                 senderBalance: senderBalance,
-                receiverBalance: receiverBalance,
                 usdValue: usdValueSender,
                 message:
-                    "New curve holder" +
-                    event.args.receiver +
+                    "New curve holder " +
+                    event.args.sender +
                     " balance " +
-                    receiverBalance +
+                    senderBalance +
                     " usd value " +
-                    usdValueReceiver,
+                    usdValueSender,
             })
         }
-        if (ctx.store.get(Holder, event.args.receiver) == null) {
-            ctx.eventLogger.emit("New holder", {
-                sender: event.args.sender,
+        if (oldReci == undefined) {
+            ctx.eventLogger.emit("New Curve LP holder", {
                 receiver: event.args.receiver,
-                senderBalance: senderBalance,
                 receiverBalance: receiverBalance,
                 usdValue: usdValueSender,
                 message:
-                    "New curve holder" +
+                    "New curve holder " +
                     event.args.receiver +
                     " balance " +
                     receiverBalance +
