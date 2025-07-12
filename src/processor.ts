@@ -16,14 +16,26 @@ import {
     START_BLOCK,
     USR_ADDRESS,
 } from "./constants.js"
-import { CurveTwocryptoOptimizedContext, TransferEvent } from "./types/eth/curvetwocryptooptimized.js"
-import { ConvexHolder, CurveHolder, Holder, StakeDaoHolder } from "./schema/store.js"
+import {
+    CurveTwocryptoOptimizedContext,
+    TransferEvent,
+} from "./types/eth/curvetwocryptooptimized.js"
+import {
+    ConvexHolder,
+    CurveHolder,
+    Holder,
+    StakeDaoHolder,
+} from "./schema/store.js"
 import {
     DepositEvent as StakedaoDepositEvent,
     LiquidityGaugeV4Context as StakedaoContext,
     WithdrawEvent as StakedaoWithdrawEvent,
 } from "./types/eth/liquiditygaugev4.js"
-import { BoosterContext, DepositedEvent as ConvexDepositEvent, WithdrawnEvent } from "./types/eth/booster.js"
+import {
+    BoosterContext,
+    DepositedEvent as ConvexDepositEvent,
+    WithdrawnEvent,
+} from "./types/eth/booster.js"
 import {
     DepositEvent as CurveDepositEvent,
     LiquidityGaugeV6Context,
@@ -33,31 +45,63 @@ import { getPriceByType } from "@sentio/sdk/utils"
 import { EthChainId } from "@sentio/sdk/eth"
 
 // Curve pool holder tracker
-const TransferEventHandler = async function (event: TransferEvent, ctx: CurveTwocryptoOptimizedContext) {
+const TransferEventHandler = async function (
+    event: TransferEvent,
+    ctx: CurveTwocryptoOptimizedContext
+) {
     try {
-        const senderBalance = scaleDown(await ctx.contract.balanceOf(event.args.sender), CPOOL_DECIMALS)
-        const receiverBalance = scaleDown(await ctx.contract.balanceOf(event.args.receiver), CPOOL_DECIMALS)
+        const senderBalance = scaleDown(
+            await ctx.contract.balanceOf(event.args.sender),
+            CPOOL_DECIMALS
+        )
+        const receiverBalance = scaleDown(
+            await ctx.contract.balanceOf(event.args.receiver),
+            CPOOL_DECIMALS
+        )
         let usdValueSender = BigDecimal(0)
         let usdValueReceiver = BigDecimal(0)
 
         if (senderBalance != BigDecimal(0)) {
-            const supply = scaleDown(await ctx.contract.totalSupply({ blockTag: "latest" }), CPOOL_DECIMALS)
-            const rlpContractBalance = scaleDown(await ctx.contract.balances(0, { blockTag: "latest" }), CPOOL_DECIMALS)
-            const usrContractBalance = scaleDown(await ctx.contract.balances(1, { blockTag: "latest" }), CPOOL_DECIMALS)
-            const usrPrice = (await getPriceByType(EthChainId.ETHEREUM, USR_ADDRESS, ctx.timestamp)) || 0
-            const rlpPrice = (await getPriceByType(EthChainId.ETHEREUM, RLP_ADDRESS, ctx.timestamp)) || 0
+            const supply = scaleDown(
+                await ctx.contract.totalSupply({ blockTag: "latest" }),
+                CPOOL_DECIMALS
+            )
+            const rlpContractBalance = scaleDown(
+                await ctx.contract.balances(0, { blockTag: "latest" }),
+                CPOOL_DECIMALS
+            )
+            const usrContractBalance = scaleDown(
+                await ctx.contract.balances(1, { blockTag: "latest" }),
+                CPOOL_DECIMALS
+            )
+            const usrPrice =
+                (await getPriceByType(
+                    EthChainId.ETHEREUM,
+                    USR_ADDRESS,
+                    ctx.timestamp
+                )) || 0
+            const rlpPrice =
+                (await getPriceByType(
+                    EthChainId.ETHEREUM,
+                    RLP_ADDRESS,
+                    ctx.timestamp
+                )) || 0
             const ratioSender = senderBalance.dividedBy(supply)
             const ratioReceiver = receiverBalance.dividedBy(supply)
 
-            const implicitUsrHoldingSender = ratioSender.multipliedBy(usrContractBalance)
-            const implicitRlpHoldingSender = ratioSender.multipliedBy(rlpContractBalance)
+            const implicitUsrHoldingSender =
+                ratioSender.multipliedBy(usrContractBalance)
+            const implicitRlpHoldingSender =
+                ratioSender.multipliedBy(rlpContractBalance)
             usdValueSender = BigDecimal.sum(
                 implicitUsrHoldingSender.multipliedBy(usrPrice),
                 implicitRlpHoldingSender.multipliedBy(rlpPrice)
             )
 
-            const implicitUsrHoldingReceiver = ratioReceiver.multipliedBy(usrContractBalance)
-            const implicitRlpHoldingReceiver = ratioReceiver.multipliedBy(rlpContractBalance)
+            const implicitUsrHoldingReceiver =
+                ratioReceiver.multipliedBy(usrContractBalance)
+            const implicitRlpHoldingReceiver =
+                ratioReceiver.multipliedBy(rlpContractBalance)
             usdValueReceiver = BigDecimal.sum(
                 implicitUsrHoldingReceiver.multipliedBy(usrPrice),
                 implicitRlpHoldingReceiver.multipliedBy(rlpPrice)
@@ -140,22 +184,37 @@ const TransferEventHandler = async function (event: TransferEvent, ctx: CurveTwo
 const deposit = Gauge.register("Deposit")
 const deposit_acc = Counter.register("Deposit_acc")
 
-CurveTwocryptoOptimizedProcessor.bind({ address: CURVE_POOL_ADDRESS, startBlock: START_BLOCK }).onEventTransfer(
-    TransferEventHandler
-)
+CurveTwocryptoOptimizedProcessor.bind({
+    address: CURVE_POOL_ADDRESS,
+    startBlock: START_BLOCK,
+}).onEventTransfer(TransferEventHandler)
 
 // Stakedao Holders tracker
-const StakedaoDepositEventHandler = async function (event: StakedaoDepositEvent, ctx: StakedaoContext) {
+const StakedaoDepositEventHandler = async function (
+    event: StakedaoDepositEvent,
+    ctx: StakedaoContext
+) {
     try {
-        const oldBalance = await ctx.store.get(StakeDaoHolder, event.args.provider)
+        const oldBalance = await ctx.store.get(
+            StakeDaoHolder,
+            event.args.provider
+        )
         const stdHolder = new StakeDaoHolder({
             id: event.args.provider,
             balance: oldBalance
-                ? BigDecimal.sum(scaleDown(event.args.value, CPOOL_DECIMALS), oldBalance.balance)
+                ? BigDecimal.sum(
+                      scaleDown(event.args.value, CPOOL_DECIMALS),
+                      oldBalance.balance
+                  )
                 : scaleDown(event.args.value, CPOOL_DECIMALS),
         })
 
-        console.log("Stakedao deposit " + event.args.provider + " amount " + event.args.value)
+        console.log(
+            "Stakedao deposit " +
+                event.args.provider +
+                " amount " +
+                event.args.value
+        )
         await ctx.store.upsert(stdHolder)
     } catch (e) {
         ctx.eventLogger.emit("stakedao deposit error", {
@@ -168,9 +227,15 @@ const StakedaoDepositEventHandler = async function (event: StakedaoDepositEvent,
     }
 }
 
-const StakedaoWithdrawEventHandler = async function (event: StakedaoWithdrawEvent, ctx: StakedaoContext) {
+const StakedaoWithdrawEventHandler = async function (
+    event: StakedaoWithdrawEvent,
+    ctx: StakedaoContext
+) {
     try {
-        const userStore = await ctx.store.get(StakeDaoHolder, event.args.provider)
+        const userStore = await ctx.store.get(
+            StakeDaoHolder,
+            event.args.provider
+        )
         if (!userStore) {
             return
         }
@@ -183,7 +248,12 @@ const StakedaoWithdrawEventHandler = async function (event: StakedaoWithdrawEven
         })
 
         console.log(
-            "Stakedao withdraw " + event.args.provider + " amount " + event.args.value + " hash " + ctx.transactionHash
+            "Stakedao withdraw " +
+                event.args.provider +
+                " amount " +
+                event.args.value +
+                " hash " +
+                ctx.transactionHash
         )
 
         await ctx.store.upsert(updatedHolder)
@@ -198,12 +268,18 @@ const StakedaoWithdrawEventHandler = async function (event: StakedaoWithdrawEven
     }
 }
 
-LiquidityGaugeV4Processor.bind({ address: STAKEDAO_GAUGE_ADDRESS_PROXY, startBlock: START_BLOCK })
+LiquidityGaugeV4Processor.bind({
+    address: STAKEDAO_GAUGE_ADDRESS_PROXY,
+    startBlock: START_BLOCK,
+})
     .onEventDeposit(StakedaoDepositEventHandler)
     .onEventWithdraw(StakedaoWithdrawEventHandler)
 
 // Convex holders tracker
-const ConvexDepositEventHandler = async function (event: ConvexDepositEvent, ctx: BoosterContext) {
+const ConvexDepositEventHandler = async function (
+    event: ConvexDepositEvent,
+    ctx: BoosterContext
+) {
     try {
         if (event.args.poolid != BigInt(CONVEX_PID)) {
             return
@@ -213,7 +289,10 @@ const ConvexDepositEventHandler = async function (event: ConvexDepositEvent, ctx
         const CHolder = new ConvexHolder({
             id: event.args.user,
             balance: oldBalance
-                ? BigDecimal.sum(scaleDown(event.args.amount, CPOOL_DECIMALS), oldBalance.balance)
+                ? BigDecimal.sum(
+                      scaleDown(event.args.amount, CPOOL_DECIMALS),
+                      oldBalance.balance
+                  )
                 : scaleDown(event.args.amount, CPOOL_DECIMALS),
         })
 
@@ -229,7 +308,10 @@ const ConvexDepositEventHandler = async function (event: ConvexDepositEvent, ctx
     }
 }
 
-const ConvexWithdrawEventHandler = async function (event: WithdrawnEvent, ctx: BoosterContext) {
+const ConvexWithdrawEventHandler = async function (
+    event: WithdrawnEvent,
+    ctx: BoosterContext
+) {
     try {
         if (event.args.poolid != BigInt(CONVEX_PID)) {
             return
@@ -262,14 +344,20 @@ BoosterProcessor.bind({ address: CONVEX_ADDRESS, startBlock: START_BLOCK })
     .onEventWithdrawn(ConvexWithdrawEventHandler)
 
 // Cruve gauge holders tracker
-const CurveGaugeDepositHandler = async function (event: CurveDepositEvent, ctx: LiquidityGaugeV6Context) {
+const CurveGaugeDepositHandler = async function (
+    event: CurveDepositEvent,
+    ctx: LiquidityGaugeV6Context
+) {
     try {
         const oldBalance = await ctx.store.get(CurveHolder, event.args.provider)
         // console.log("Curve deposit " + event.args.provider + " value " + event.args.value)
         const CurveGaugeHolder = new CurveHolder({
             id: event.args.provider,
             balance: oldBalance
-                ? BigDecimal.sum(scaleDown(event.args.value, CPOOL_DECIMALS), oldBalance.balance)
+                ? BigDecimal.sum(
+                      scaleDown(event.args.value, CPOOL_DECIMALS),
+                      oldBalance.balance
+                  )
                 : scaleDown(event.args.value, CPOOL_DECIMALS),
         })
 
@@ -285,8 +373,12 @@ const CurveGaugeDepositHandler = async function (event: CurveDepositEvent, ctx: 
     }
 }
 
-const CurveGaugeWithdrawHandler = async function (event: CurveWithdrawEvent, ctx: LiquidityGaugeV6Context) {
+const CurveGaugeWithdrawHandler = async function (
+    event: CurveWithdrawEvent,
+    ctx: LiquidityGaugeV6Context
+) {
     try {
+        ;("test")
         const userStore = await ctx.store.get(CurveHolder, event.args.provider)
         if (!userStore) {
             return
@@ -311,6 +403,9 @@ const CurveGaugeWithdrawHandler = async function (event: CurveWithdrawEvent, ctx
     }
 }
 
-LiquidityGaugeV6Processor.bind({ address: CURVE_GAUGE_ADDRESS, startBlock: START_BLOCK })
+LiquidityGaugeV6Processor.bind({
+    address: CURVE_GAUGE_ADDRESS,
+    startBlock: START_BLOCK,
+})
     .onEventDeposit(CurveGaugeDepositHandler)
     .onEventWithdraw(CurveGaugeWithdrawHandler)
